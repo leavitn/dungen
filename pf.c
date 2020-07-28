@@ -270,8 +270,9 @@ int pqueue_pop(struct node **queue)
     }
 } 
 
-// frees remaining nodes in the queue
-void pqueue_purge(struct node **queue)
+/*
+// frees remaining nodes in the queue w/ recursion
+void pqueue_purge_recur(struct node **queue)
 {
     struct node *curr;
     int i;
@@ -291,6 +292,30 @@ void pqueue_purge(struct node **queue)
         curr->next = NULL;
     }
     pqueue_purge(queue); // recur until *queue == NULL
+}*/
+
+// frees remaining nodes in the queue
+void pqueue_purge(struct node **queue)
+{
+    struct node *curr;
+    int i;
+
+    while (*queue) // while queue isn't empty
+    {
+        if ( (*queue)->next == NULL) // if only 1 member in queue, free ref and point to NULL
+        {
+            free(*queue);
+            *queue = NULL;
+        }
+        else // if more than 1 member in the queue
+        {
+            for (curr = *queue; curr->next->next != NULL; curr = curr->next)
+                ;   // find last member of queue
+            free(curr->next); // free last member
+            curr->next = NULL; // point 2nd to last member to null
+        }
+    }
+    return;
 }
 
 // save a .csv file of the array
