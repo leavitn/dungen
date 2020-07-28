@@ -193,13 +193,10 @@ void connect_rooms(int map[], struct room *roomlist)
 	for (i = 0; i < n; i++)
 		map[links[i]] = LINK;
 
-	for (i = 0; i < n; i++)
+	for (i = 0; i < n - 1; i++)
 	{ // for each pair of links, connect them
 		start = links[i];
-		if (i == n - 1)
-			stop = links[0];
-		else
-			stop = links[i + 1];
+		stop = links[i + 1];
 		connect_links(map, start, stop);
 	}
 
@@ -379,7 +376,7 @@ int get_move_cost(int val)
 {
 	switch(val)
 	{
-		case STONE: case SPACER: return 1;
+		case STONE: case SPACER: case ROOM: return 1;
 		default: return 4;   
 	}
 }
