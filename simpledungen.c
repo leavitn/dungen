@@ -193,7 +193,7 @@ void connect_rooms(int map[], struct room *roomlist)
 	for (i = 0; i < n; i++)
 		map[links[i]] = LINK;
 
-	for (i = 0; i < n; i += 2)
+	for (i = 0; i < n; i++)
 	{ // for each pair of links, connect them
 		start = links[i];
 		if (i == n - 1)
