@@ -10,7 +10,6 @@ Pathfinding algorithms
 #define ALLDIRS		9 	// n, s, e, w, ne, nw, se, sw
 
 /* #################### FUNCTIONS ############################### */
-int *createDistanceMap(bool hazards[], int start); // uses depth first pathfinding to return a steps map  
 int *create_Djikstra_Map(int moveCost[], int start); // uses djikstra pathfinding to return a path map
 // utility functions
 int x(int i); // given an iteration, return an x coord
@@ -26,49 +25,6 @@ void pqueue_push(struct node **queue, int key, int priority); // push a new key 
 int pqueue_pop(struct node **queue); // pop the priority queue
 void pqueue_purge(struct node **queue); // free()s all remaining nodes in the queue
 /* ############################################################## */
-
-// one to many
-int *create_Djikstra_Map(int moveCost[], int start)
-{ 
-    struct node *frontier;  // priority queue of cells to visit
-    int costTo[AREA];       // map of cumulative cost from start (origin) to key (hash of coords)
-    int cameFrom[AREA];     // the cell this cell was visited from originally
-    int parent, child;      // stores keys, parent = visited key, child = key visitable from parent key (adjacent)
-    int i;                  // iterators
-    int stop;
-
-    // Initialization
-    pqueue_push(&frontier, start, 0); // priority queue starts with start
-    init(costTo, MAX_STEPS);             // initialize costTo map
-    costTo[start] = 0; // current tile (start) is 0 steps away
-    cameFrom[start] = INVALID; // so you know it's the start
-    // make djikstra steps map
-    while(frontier != NULL)
-    {
-        parent = pqueue_pop(&frontier); // pop top of the queue
-        // visit parent. For each adjacent cell (child), update costTo[child] if it can be lowered
-        //      and if so, add to piority queue so key can be visited later
-        for (i = 1; i < ALLDIRS; ++i)
-        { // for each of the 8 directions - change i < 5 for cardinal only
-            child = offsetkey(parent, y(i), x(i));
-
-            // if not out of bounds and cost from start to curr to tmp < recorded costTo[tmp]
-            // updated costTo[tmp] to lower value and add to priority queue with priority = costTo[tmp]
-            if (isValid(child) && costTo[parent] + moveCost[child] < costTo[child])
-            { 
-                costTo[child] = costTo[parent] + moveCost[child]; // update costTo map
-                cameFrom[child] = parent; // update cameFrom
-                pqueue_push(&frontier, child, costTo[child]); // push key to the queue, priority = costTo
-                // this means that a key could exist in the queue multiple times with different priorities
-                // by the time it visits the key for the last time, there will be no cells to visit.
-                // Can add a function that would seek & destroy prexisting keys in the queue, but would that
-                // really speed this up?
-            }
-        }
-    }
-    fprintArray(costTo, 1);
-
-} 
 
 // a* pathfinding algorithm
 // one to one
@@ -120,6 +76,51 @@ struct node *astar(int moveCost[], int start, int stop)
 	return NULL; // failure to path find, should log this
 }
 
+// like a*, except flood fills to every legal tile in them map
+// one to many
+// needs to be modified to return the path map
+int *create_Djikstra_Map(int moveCost[], int start)
+{ 
+    struct node *frontier;  // priority queue of cells to visit
+    int costTo[AREA];       // map of cumulative cost from start (origin) to key (hash of coords)
+    int cameFrom[AREA];     // the cell this cell was visited from originally
+    int parent, child;      // stores keys, parent = visited key, child = key visitable from parent key (adjacent)
+    int i;                  // iterators
+    int stop;
+
+    // Initialization
+    pqueue_push(&frontier, start, 0); // priority queue starts with start
+    init(costTo, MAX_STEPS);             // initialize costTo map
+    costTo[start] = 0; // current tile (start) is 0 steps away
+    cameFrom[start] = INVALID; // so you know it's the start
+    // make djikstra steps map
+    while(frontier != NULL)
+    {
+        parent = pqueue_pop(&frontier); // pop top of the queue
+        // visit parent. For each adjacent cell (child), update costTo[child] if it can be lowered
+        //      and if so, add to piority queue so key can be visited later
+        for (i = 1; i < ALLDIRS; ++i)
+        { // for each of the 8 directions - change i < 5 for cardinal only
+            child = offsetkey(parent, y(i), x(i));
+
+            // if not out of bounds and cost from start to curr to tmp < recorded costTo[tmp]
+            // updated costTo[tmp] to lower value and add to priority queue with priority = costTo[tmp]
+            if (isValid(child) && costTo[parent] + moveCost[child] < costTo[child])
+            { 
+                costTo[child] = costTo[parent] + moveCost[child]; // update costTo map
+                cameFrom[child] = parent; // update cameFrom
+                pqueue_push(&frontier, child, costTo[child]); // push key to the queue, priority = costTo
+                // this means that a key could exist in the queue multiple times with different priorities
+                // by the time it visits the key for the last time, there will be no cells to visit.
+                // Can add a function that would seek & destroy prexisting keys in the queue, but would that
+                // really speed this up?
+            }
+        }
+    }
+    fprintArray(costTo, 1);
+
+} 
+
 // writes path from array data into a linked list
 struct node *pathtolist(int cameFrom[], int stop)
 {
@@ -159,15 +160,6 @@ void report(int cameFrom[], int stop)
 	fprintArray(path, 1);
     return;
 }
-
-
-/*
-void populate_path_list(int cameFrom, int stop)
-{
-	int curr = stop;
-	struct node *path;
-}
-*/
 
 // initialize map with a value so all cells are set to value
 void init(int *map, int val)
